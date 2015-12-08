@@ -340,20 +340,34 @@ IO\_INSTRUCTION exits compared other reasons. There are also some differences in
 how the exits occur over time.
 
 \begin{figure}[htpb!]
-\centering
-\subfigure[Windows]{\includegraphics[width=1\textwidth]{hlt_windows.pdf}}\hfill
-\subfigure[Linux]{\includegraphics[width=1\textwidth]{hlt_linux.pdf}}\hfill
-\caption{Distribution of HLT (halt) exits for Windows and Linux virtual machine
-boots. Observe that the number of HLT exits quickly climbs and stabilizes for
-Linux, but does so much later in the Windows process. It is difficult to explain
-this discrepancy, but it does give some insight that we can use the counter
-instrumentation tools to observe differences in how these two operating systems
-use the hypervisor when running in a virtual machine.}
-\label{fig:winlinhlt}
+    \centering
+    \begin{minipage}{.5\textwidth}
+        \centering
+        \includegraphics[width=1\textwidth]{hlt_windows.pdf}
+        Windows
+    \end{minipage}%
+    \begin{minipage}{0.5\textwidth}
+        \centering
+        \includegraphics[width=1\textwidth]{hlt_linux.pdf}
+        Linux
+    \end{minipage}
+    \caption{Distribution of HLT (halt) exits for Windows and Linux virtual machine
+    boots. Observe that the number of HLT exits quickly climbs and stabilizes for
+    Linux, but does so much later in the Windows process. It is difficult to explain
+    this discrepancy, but it does give some insight that we can use the counter
+    instrumentation tools to observe differences in how these two operating systems
+    use the hypervisor when running in a virtual machine.}
+    \label{fig:winlinhlt}
 \end{figure}
 
 \subsection{KVM and QEMU}
+The next area of interest is lookng at how both the KVM and QEMU measurements
+portray the same workload. In Figure~\ref{fig:qemukvm}, a boot sequence of the
+CentOS VM has been graphed using both subsystems' counters. This graph shows us
+that KVM generates a significant amount of data compared to QEMU, but also that
+growth of KVM counters is more granular.
 
+%TODO: more about QEMU vs KVM
 
 \begin{figure}[htpb!]
 \centering
