@@ -1,0 +1,84 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Timeline}{1}{subsection.1.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Background}{1}{subsection.1.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Hardware Performance Counters}{1}{subsection.1.3}}
+\citation{numchecker}
+\citation{feasibility}
+\citation{pc}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Motivation}{2}{subsection.1.4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Virtual machine topology. Areas of focus include QEMU and KVM.}}{2}{figure.1}}
+\newlabel{fig:vmtop}{{1}{2}{Virtual machine topology. Areas of focus include QEMU and KVM}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}}
+\citation{arehardware}
+\citation{numchecker}
+\citation{numchecker}
+\citation{numchecker}
+\citation{arehardware}
+\citation{arehardware}
+\citation{arehardware}
+\citation{overcount}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Using Counters for Dynamic Analysis}{3}{subsection.2.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Overhead}{3}{subsection.2.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Counter Accuracy and Nondeterminism}{3}{subsection.2.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Detection Accuracy from Using HPCs}{3}{subsection.2.4}}
+\citation{forsyth}
+\citation{numchecker}
+\citation{feasibility}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Diagram of the various transfers of control between QEMU, KVM, and the host virtual machine. When KVM returns to QEMU, it provides an exit reason which can be used by QEMU to take appropriate action. However, KVM may transfer control to the virtual machine (and back) before returning to QEMU. The arrows represent transfer of control. The duration for which HPCs were recorded is also displayed. The area of interest highlighted was chosen because it focuses solely on QEMU while allowing for collection of the exit reason from KVM.}}{4}{figure.2}}
+\newlabel{fig:qemutrap}{{2}{4}{Diagram of the various transfers of control between QEMU, KVM, and the host virtual machine. When KVM returns to QEMU, it provides an exit reason which can be used by QEMU to take appropriate action. However, KVM may transfer control to the virtual machine (and back) before returning to QEMU. The arrows represent transfer of control. The duration for which HPCs were recorded is also displayed. The area of interest highlighted was chosen because it focuses solely on QEMU while allowing for collection of the exit reason from KVM}{figure.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}QEMU}{4}{section.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Modifications}{5}{subsection.3.1}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}KVM and \texttt  {kprof}}{5}{section.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}KVM Exits}{5}{subsection.4.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}The \texttt  {kprof} Module}{5}{subsection.4.2}}
+\citation{f14}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Data Collection}{6}{section.5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces System architecture overview composing both userspace and kernel space data collection mechanisms.}}{6}{figure.3}}
+\newlabel{fig:diagram}{{3}{6}{System architecture overview composing both userspace and kernel space data collection mechanisms}{figure.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Analysis}{6}{section.6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}iozone and Workload Distribution}{6}{subsection.6.1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Plot of the unique counter values observed over time. The workload consists of initial boot of a Linux machine, followed by three succesive runs of the iozone filesystem benchmark. Here, \textit  {bucket size} refers to a smoothing factor applied to the data. Numbers are placed into buckets of this size. A bucket size of 1000 means there are buckets of values 0-999, 1000-1999, etc. Numbers in the same bucket are treated as the same for the creation of this graph.}}{7}{figure.4}}
+\newlabel{fig:iozoneplot}{{4}{7}{Plot of the unique counter values observed over time. The workload consists of initial boot of a Linux machine, followed by three succesive runs of the iozone filesystem benchmark. Here, \textit {bucket size} refers to a smoothing factor applied to the data. Numbers are placed into buckets of this size. A bucket size of 1000 means there are buckets of values 0-999, 1000-1999, etc. Numbers in the same bucket are treated as the same for the creation of this graph}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Windows and Linux}{8}{subsection.6.2}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Future Work}{8}{section.7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Windows vs Linux}}{9}{figure.5}}
+\newlabel{fig:winlinhlt}{{5}{9}{Windows vs Linux}{figure.5}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Windows}}}{9}{figure.5}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Linux}}}{9}{figure.5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Open Questions}{10}{subsection.7.1}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{10}{section.8}}
+\citation{*}
+\bibdata{report}
+\bibcite{feasibility}{1}
+\bibcite{papi}{2}
+\bibcite{forsyth}{3}
+\bibcite{arehardware}{4}
+\bibcite{pc}{5}
+\bibcite{f14}{6}
+\bibcite{vmbench}{7}
+\bibcite{numchecker}{8}
+\bibcite{6560672}{9}
+\bibcite{overcount}{10}
+\bibcite{can-trusted}{11}
+\bibcite{HLT}{12}
+\bibcite{accuracy}{13}
+\bibcite{Zhang}{14}
+\bibstyle{plain}
