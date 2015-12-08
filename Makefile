@@ -1,4 +1,4 @@
-FILE=report
+FILE=thesis
 ifeq ($(shell uname -o),Cygwin)
 	OPENNER=cygstart
 else
