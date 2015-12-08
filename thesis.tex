@@ -48,7 +48,7 @@ plan for the work was developed and several core components were engineered.
 This includes the user space counter collection tool and the kernel space tool.
 
 The second semester of this work was mostly focused around understanding whether
-performance counters can be a useful invariant on thier own, or whetherother
+performance counters can be a useful invariant on their own, or whether other
 components would need to be used in order to detect execution irregularities.
 This involved collecting data, creating tools to analyze it, and graphing the
 data to understand its usefulness.
@@ -74,8 +74,10 @@ able to enable the counters and begin collecting data.
 
 The counters available vary from machine to machine. The important counters are
 total retired instructions, conditional branch instructions, branch
-instructions, store instructions, and load instructions.  The counters were
-collected with PAPI, which is described in the next section.
+instructions, store instructions, and load instructions.  There are multiple
+ways to access the counter values. In user space, I used a library called
+PAPI\cite{papi}, and in kernel space, I made use of the built-in performance
+counter API in Linux.
 
 \subsection{Motivation}
 To understand the motivation behind this project, it is important to have a good
@@ -84,7 +86,7 @@ of the topology is shown in Figure~\ref{fig:vmtop}.
 
 \begin{figure}[htp]
     \centering
-    \includegraphics[width=3.5in]{container_diagram.pdf}
+    \includegraphics[width=3.5in]{topology.pdf}
     \caption{Virtual machine topology. Areas of focus include QEMU and KVM.}
     \label{fig:vmtop}
 \end{figure}
