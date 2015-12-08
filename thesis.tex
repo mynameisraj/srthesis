@@ -168,21 +168,20 @@ threshold of all known values\cite{numchecker}. In one paper, artificial neural
 networks were used\cite{feasibility}.
 
 
-
-
 \section{QEMU}
-QEMU is a machine emulator which allows for the emulation of a platform so that
-a full operating system/hypervisor may run on top of it. QEMU provides emulation
-of both entire machines and external I/O devices (e.g., hard-drives, network
-devices, and keyboards). However, when the host and guest operating system are
-the same architecture\footnote{An \texttt{x86} machine may also be virtualized
-on an \texttt{x86\_64} architecture}, native virtualization can be accomplished
-by using KVM, a Linux kernel feature which allows for hardware-assisted
-virtualization. KVM leverages processor support for virtualization to expose an
-API for running guest virtual machines. In this configuration, QEMU only
-emulates I/O devices.  Because both pieces of software play crucial roles in
-running the guest virtual machine, execution frequently traps from one to
-another. This is explained in Figure~\ref{fig:qemutrap}.
+QEMU is a machine emulator which allows for the virtualization of an operating
+system. It can function as a hypervisor, emulating the entire machine in
+software.. QEMU provides emulation of both entire machines and external I/O
+devices (e.g., hard-drives, network devices, and keyboards). However, when the
+host and guest operating system are the same architecture\footnote{An
+\texttt{x86} machine may also be virtualized on an \texttt{x86\_64}
+architecture}, native virtualization can be accomplished by using KVM, a Linux
+kernel feature which allows for hardware-assisted virtualization. KVM leverages
+processor support for virtualization to expose an API for running guest virtual
+machines. In this configuration, QEMU only emulates I/O devices.  Because both
+pieces of software play crucial roles in running the guest virtual machine,
+execution frequently traps from one to another. This is explained in
+Figure~\ref{fig:qemutrap}.
 
 \begin{figure}
     \centering    
@@ -205,6 +204,10 @@ instrumentation purposes.
 
 The modifications were fairly simple: using the PAPI performance counter
 library, I was able to output HPC measurements across a known path of execution.
+The path of execution chosen measures the lifespan of an exit in QEMU. That is,
+the counter is started when the exit comes back to QEMU and ended when the next
+exit leaves.
+
 Furthermore, with the KVM hypercall extension, I was able to make markings in
 the data collection from within the guest VM. With this toolset, it became
 trivial to mark the beginning and ending of a program in the guest VM and
@@ -348,6 +351,24 @@ instrumentation tools to observe differences in how these two operating systems
 use the hypervisor when running in a virtual machine.}
 \label{fig:winlinhlt}
 \end{figure}
+
+\subsection{KVM and QEMU}
+
+
+\begin{figure}[htpb!]
+\centering
+\includegraphics[width=1\textwidth]{qemu_kvm_overtime.pdf}
+\caption{Unique QEMU and KVM exits over time. This is based on the total
+instructions performance counter. The QEMU data was collected with PAPI. The KVM
+data was collected using the kprof kernel module. The general upward trend of
+seeing unique exits is true for both components across the boot, but KVM sees
+far more exits. Upon adjusting the bucket size it becomes very clear that KVM
+is seeing far more ``clustered'' exit values than QEMU does. Since these are
+collected from the same workload, it is interesting to see that there are some
+discrepancies.}
+\label{fig:qemukvm}
+\end{figure}
+
 
 \section{Future Work}
 Future work will involve building tools around the workload analysis component
