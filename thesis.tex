@@ -31,16 +31,18 @@
 
 
 \section{Introduction}
-This report summarizes my work with the DEPEND research group as part of CS499
-(senior thesis) from January 2015 through December 2015.
+\label{sec:intro} This report summarizes my work with the DEPEND research group
+as part of CS499 (senior thesis) from January 2015 through December 2015.
 
-The paper is structured as follows. A brief discussion of performance counters
-work is provided in Section II. An overview of the userspace data is presented
-in Section III. In Section IV, the development of the kernel module and
-interaction with KVM is explained. Section V contains an overview of the data
-collection and architecture. Section VI analyzes the data that was collected,
-with areas for future work presented in Section VII. Finally, the conclusions
-from this work are available in Section VIII.
+The paper is structured as follows. A brief discussion of related performance
+counters work is provided in Section~\ref{sec:related}. An overview of the
+userspace data and QEMU is presented in Section~\ref{sec:qemu}. In
+Section~\ref{sec:kvm}, the development of the kernel module and interaction with
+KVM is explained. Section~\ref{sec:data} contains an overview of the data
+collection and architecture. Section~\ref{sec:analysis} analyzes the data that
+was collected, with areas for future work presented in
+Section~\ref{sec:futurework}. Finally, the conclusions from this work are
+available in Section~\ref{futurework}.
 
 \subsection{Timeline}
 This project took place over two semesters. In the first semester, the initial
@@ -107,6 +109,7 @@ security.
 
 
 \section{Related Work}
+\label{sec:related}
 There are a number of existing works which cover HPCs for security. These center
 around several concerns:
 \begin{itemize}
@@ -169,6 +172,7 @@ networks were used\cite{feasibility}.
 
 
 \section{QEMU}
+\label{sec:qemu}
 QEMU is a machine emulator which allows for the virtualization of an operating
 system. It can function as a hypervisor, emulating the entire machine in
 software.. QEMU provides emulation of both entire machines and external I/O
@@ -215,6 +219,7 @@ observe the QEMU data for this period.
 
 
 \section{KVM and \texttt{kprof}}
+\label{sec:kvm}
 The KVM kernel module was modified for use in this project. This section aims to
 explain the changes that were made and elaborate on the design of the additional
 data collection module that was developed.\footnote{A full list of modifications
@@ -265,6 +270,7 @@ internal state of the module is exposed via the \texttt{ioctl} interface.
 
 
 \section{Data Collection}
+\label{sec:data}
 Data for this project was collected using both the \texttt{kprof} kernel module
 and the userspace QEMU extensions. The data was collected from runs of a CentOS
 7 virtual machine when using Linux. For Windows, the VM was a Windows 7 VM.
@@ -281,6 +287,7 @@ overview of the entire system is shown in Figure \ref{fig:diagram}.
 
 
 \section{Analysis}
+\label{sec:analysis}
 
 \subsection{iozone and Workload Distribution}
 % TODO
@@ -385,6 +392,7 @@ discrepancies.}
 
 
 \section{Future Work}
+\label{sec:futurework}
 Future work will involve building tools around the workload analysis component
 of this work. Since the API is already there, this is not too difficult to do
 for other developers. They can easily grab the counter data and manipulate it. I
@@ -405,6 +413,7 @@ application of this work.
 
 
 \section{Conclusion}
+\label{sec:conclusion}
 Personally, I have learned many interesting things about how virutal machines
 operate and how other subsystems of Linux work.
 
