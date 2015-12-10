@@ -6,7 +6,7 @@ else
 endif
 
 all:
-	latexmk -pdf ${FILE}
+	latexmk -bibtex -pdf ${FILE}
 	${OPENNER} ${FILE}.pdf
 clean:
 	latexmk -c

@@ -24,7 +24,7 @@
 \begin{document}
 
 % title
-\title{Senior Thesis Research Report}
+\title{Senior Thesis}
 \author{Raj Ramamurthy\\
   \texttt{rmmrthy2 @ illinois.edu}}
 \maketitle
@@ -42,7 +42,7 @@ KVM is explained. Section~\ref{sec:data} contains an overview of the data
 collection and architecture. Section~\ref{sec:analysis} analyzes the data that
 was collected, with areas for future work presented in
 Section~\ref{sec:futurework}. Finally, the conclusions from this work are
-available in Section~\ref{futurework}.
+available in Section~\ref{sec:conclusion}.
 
 \subsection{Timeline}
 This project took place over two semesters. In the first semester, the initial
@@ -52,8 +52,11 @@ This includes the user space counter collection tool and the kernel space tool.
 The second semester of this work was mostly focused around understanding whether
 performance counters can be a useful invariant on their own, or whether other
 components would need to be used in order to detect execution irregularities.
-This involved collecting data, creating tools to analyze it, and graphing the
-data to understand its usefulness.
+This involved collecting data on multiple Linux machines and VMs, creating tools
+to analyze the data, and graphing the data to understand its usefulness.
+Additionally, most of this semester was spent brainstorming potential
+applications of the performance counter work and deciding which scenarios this
+work could be useful in.
 
 \subsection{Background}
 This thesis was grown out of previous semsters I had spent working with the
@@ -62,9 +65,10 @@ following question:
 \textit{by constructing fingerprints
     from execution signatures (using performance counters) of a hypervisor
     (e.g., qemu-kvm) at different points in time, is it possible to detect
-    compromised hypervisor execution by comparing them to known good ones?} This
+    compromised hypervisor execution by comparing those signatures to known good ones?} This
     is a form of \textit{dynamic analysis} because the detection is done at
-    runtime and not at compile time (static analysis).
+    performed by running the hypervisor and not through a tool that analyzes a
+    binary beforehand.
 
 \subsection{Hardware Performance Counters}
 Hardware performance counters (herein referred to as HPCs) allow for the
@@ -93,8 +97,8 @@ of the topology is shown in Figure~\ref{fig:vmtop}.
     \label{fig:vmtop}
 \end{figure}
 
-A search of the National Vulnerability Database shows that there are many
-reported vulnerabilities in QEMU. These range in severity, but can be as grave
+A search of the National Vulnerability Database shows that there are over
+100 reported vulnerabilities in QEMU. These range in severity, but can be as grave
 as allowing for arbitrary code execution by the virtual machine
 guest.\footnote{\url{http://web.nvd.nist.gov/view/vuln/search-results?query=QEMU&search_type=all&cves=on}}
 While there are research papers already published on dynamic analysis using
@@ -107,13 +111,15 @@ very important, and because the hypervisor functions as the backbone of a
 virtualized system, its integrity is paramount for the virtual machine's
 security.
 
+% zak comment - some cloud on enterprise statistic?
+
 
 \section{Related Work}
 \label{sec:related}
 There are a number of existing works which cover HPCs for security. These center
 around several concerns:
 \begin{itemize}
-    \item Overhead in using HPCs
+    \item Performance overhead in using HPCs
     \item Accuracy and nondeterminism of the counters
     \item Accuracy of detection methods using counters
     \item Feasability of HPCs as a dynamic analysis invariant
@@ -142,7 +148,8 @@ situation was less than 10\%\cite{arehardware}.
 \subsection{Counter Accuracy and Nondeterminism}
 Using HPCs as an invariant has proved a controversial topic, as they appear to
 be nondeterministic. This is because there are many events happening on the
-processor, which cause small fluctuations in the counter values.
+processor, which cause small fluctuations in the counter values. These include
+interrupts and other processes running on the system.
 
 However, some metrics are more consistent than others. From \cite{arehardware}:
 ``The shortlisted events include the total number of instructions retired, the
@@ -154,7 +161,8 @@ There are many sources of nondeterminism, and it appears to vary from chip to
 chip. The paper ``Non-determinism and overcount on modern hardware performance
 counter implementations'' explores these sources and attempts to make sense of
 which counters are best. It comes to the conclusion that total instructions
-retired is one of the most consistent counters\cite{overcount}.
+retired is one of the most consistent counters\cite{overcount}. This paper also
+discusses the issue of overcount, which occurs in virtually every counter.
 
 \subsection{Detection Accuracy from Using HPCs}
 HPCs only provide the data. From this data, is important to conduct proper
@@ -169,23 +177,24 @@ these choices, but each approach has different advantages\cite{forsyth}. It is
 also possible to build simple classification simply by looking within a
 threshold of all known values\cite{numchecker}. In one paper, artificial neural
 networks were used\cite{feasibility}.
+% zak comment - "do we do this?"
+% raj - maybe a misunderstanding, this is still literature review
 
 
 \section{QEMU}
 \label{sec:qemu}
 QEMU is a machine emulator which allows for the virtualization of an operating
-system. It can function as a hypervisor, emulating the entire machine in
-software.. QEMU provides emulation of both entire machines and external I/O
-devices (e.g., hard-drives, network devices, and keyboards). However, when the
-host and guest operating system are the same architecture\footnote{An
-\texttt{x86} machine may also be virtualized on an \texttt{x86\_64}
-architecture}, native virtualization can be accomplished by using KVM, a Linux
-kernel feature which allows for hardware-assisted virtualization. KVM leverages
-processor support for virtualization to expose an API for running guest virtual
-machines. In this configuration, QEMU only emulates I/O devices.  Because both
-pieces of software play crucial roles in running the guest virtual machine,
-execution frequently traps from one to another. This is explained in
-Figure~\ref{fig:qemutrap}.
+system. It can function as a software hypervisor and emulate an entire machine.
+QEMU provides emulation of both entire machines and external I/O devices (e.g.,
+hard-drives, network devices, and keyboards). However, when the host and guest
+operating system are the same architecture\footnote{An \texttt{x86} machine may
+also be virtualized on an \texttt{x86\_64} architecture}, native virtualization
+can be accomplished by using KVM, a Linux kernel module which allows for
+hardware-assisted virtualization. KVM leverages processor support for
+virtualization to expose an API for running guest virtual machines. In this
+configuration, QEMU only emulates I/O devices.  Both pieces of software play
+crucial roles in running the guest virtual machine, and execution frequently
+traps from one to another. This is explained in Figure~\ref{fig:qemutrap}.
 
 \begin{figure}
     \centering    
@@ -195,9 +204,10 @@ Figure~\ref{fig:qemutrap}.
         reason which can be used by QEMU to take appropriate action. However,
         KVM may transfer control to the virtual machine (and back) before
         returning to QEMU. The arrows represent transfer of control. The
-        duration for which HPCs were recorded is also displayed. The area of
-        interest highlighted was chosen because it focuses solely on QEMU while
-        allowing for collection of the exit reason from KVM.}
+        duration for which HPCs were recorded is also displayed. This area was
+        chosen because it focuses solely on QEMU while allowing for the
+        collection of the exit reason for KVM, allowing us to only collect
+    counter data from the QEMU binary.}
 \label{fig:qemutrap}
 \end{figure}
 
@@ -226,12 +236,14 @@ data collection module that was developed.\footnote{A full list of modifications
 to the module is available in the README of the project.}
 
 \subsection{KVM Exits}
-When execution is transferred to the KVM context, the hypervisor will return
-what is known as an \textit{exit reason} when execution transfers back. The exit
-reason is related to the hardware VM exit provided by VT-x. There is
-a long list of exit reasons spanning many different explanations for what
-occurred while KVM had control of execution. \footnote{A full list of the exit
-    reasons for KVM is available at
+When execution is transferred to KVM, the hypervisor will return what is known
+as an \textit{exit reason} when execution transfers back. If the exit was
+generated by VT-x (a privileged instruction was executed and the VM is using
+hardware-assisted virtualization, KVM will label the exit appropriately
+corresponding to its context. In other exits not generated by VT-x, KVM will
+also place a label on the exit reason. There is a long list of exit reasons
+spanning many different explanations for what occurred while KVM had control of
+execution. \footnote{A full list of the exit reasons for KVM is available at
 \url{http://lxr.free-electrons.com/source/arch/x86/include/uapi/asm/vmx.h\#L30}}
 
 \subsection{The \texttt{kprof} Module}
@@ -240,21 +252,22 @@ driver. This allows the usage of the \texttt{ioctl} function from the user space
 program (useragent) and for data to be transferred out of the kernel.
 
 In the device driver, called \texttt{kprof}, a set of internal buffers in
-constructed so that the data may be continuously populated in memory and then
-flushed to disk at an interval (this is the same technique used in the hprobe
-kernel module).  This helps keep the performance impact of this double buffer
-solution manageable in addition to providing a lock-free mechanism for reading
-the data from multiple code paths.
+constructed so that the vectors of performance counter data may be continuously
+populated in memory and then flushed to disk at an interval (this is the same
+technique used in the hprobe kernel module).  This helps keep the performance
+impact of this double buffer solution manageable in addition to providing a
+lock-free mechanism for reading the data from multiple code paths.
 
-The current module exposes two simple symbols:
+The current kprof API has the following functions:
 \begin{enumerate}
     \item{\texttt{start\_record()}, which starts the recording of events.}
     \item{\texttt{stop\_record(exit\_reason)}, which stops the recoding, records
-        the difference since the last call to \texttt{start\_record}, and
-    records the exit reason given for this data entry.}
+        the difference in the counter values since the last call to
+    \texttt{start\_record}, and records the exit reason given for this data
+entry.}
 \end{enumerate}
 
-I then modified the KVM kernel module to make these calls around exits.
+I then modified the KVM kernel module to make these calls in the exit handler.
 Specifically, the counter values recorded represent execution across the KVM
 code path. When an exit returns, the counters are started until the next exit
 comes in.
@@ -281,7 +294,9 @@ overview of the entire system is shown in Figure \ref{fig:diagram}.
     \centering
     \includegraphics[width=4.5in]{diagram.pdf}
     \caption{System architecture overview composing both userspace and kernel
-    space data collection mechanisms.}
+    space data collection mechanisms. Two unique files are generated. Each line
+in the file represents a row of tab-separated data: the first entry is
+the exit reason, which is followed by the performance counter values.}
     \label{fig:diagram}
 \end{figure}
 
@@ -304,16 +319,20 @@ graph.}
     \label{fig:iozoneplot}
 \end{figure}
 
-A visual evaluation of the data as presented in Figure \ref{fig:iozoneplot}
-shows that we cannot make an accurate judgement of whether we are seeing a new
-wokload purely based on the performance counter data. From this graph, we
-observe that the workload manifests as a change in the graph. Additionally, this
-graph gives some insights into how the operating system uses the hypervisor. We
-observe a high level of entropy at boot and shortly after the shell is displayed
-to the user. Runs of the filesystem benchmark increase the number of unique
-counters observed, but successive runs do not show an increase by a lesser
-delta. From this, we can conclude that while the performance counters are a
-valuable metric, they cannot stand alone in detecting certain executions.
+Figure~\ref{fig:iozoneplot} shows a plot of unique counter values observed over
+time for a workload consisting of machine boot followed by several runs of the
+iozone benchmark. Multiple data collection trials and analysis showed that the
+counter data is consistent across trials. A visual evaluation of the data as
+presented in Figure \ref{fig:iozoneplot} shows that we cannot make an accurate
+judgement of whether we are seeing a new wokload purely based on the performance
+counter data. From this graph, we observe that the workload manifests as a
+change in the graph.  Additionally, this graph gives some insights into how the
+operating system uses the hypervisor. We observe a high level of entropy at boot
+and shortly after the shell is displayed to the user. Runs of the filesystem
+benchmark increase the number of unique counters observed, but successive runs
+do not show an increase by a lesser delta. From this, we can conclude that while
+the performance counters are a valuable metric, they cannot stand alone in
+detecting certain executions.
 
 This is just one view of the data. Another is to separate the graphs by observed
 exit reason. This allows us to interpret the specific nature of the workload.
@@ -427,7 +446,7 @@ distributed and how different systems leverage the hypervisor.
 % list all references without citing them in the document
 \nocite{*}
 
-\bibliography{report}{}
+\bibliography{thesis}{}
 \bibliographystyle{plain}
 
 \end{document}
