@@ -477,15 +477,21 @@ computation being done using the hypervisor could be drawn from the data.
 
 \section{Conclusion}
 \label{sec:conclusion}
-Personally, I have learned many interesting things about how virutal machines
-operate and how other subsystems of Linux work.
+This work has shown that hardware performance counters can provide valuable
+infomration about how the hypervisor is used. It has also shown that HPCs alone
+cannot be used as an invariant for dynamic security analysis, and it has helped
+motivate the future direction of the hshield work.
 
-HPCs are an interesting avenue to explore for security purposes, but ultimately
-they are more immediately useful as a method of observing how a workload is
-distributed and how different systems leverage the hypervisor.
+One very valuable product of this work is the creation of the \textit{kprof}
+module, which allows any user-space process (or kernel module) to easily and
+efficiently capture and extract performance counter data. My hope is that this
+module is further developed into a powerful suite of analysis tools that any
+program can quickly invoke.
 
-
-\newpage
+Personally, I have learned many interesting facts about how virutal machines
+operate and how other subsystems of Linux work. Specifically, I've learned the
+effects of interrupts on program execution, how to use performance counters to
+instrument execution, and how to develop an efficient device driver.
 
 % list all references without citing them in the document
 \nocite{*}
