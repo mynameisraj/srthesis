@@ -326,9 +326,10 @@ counter data is consistent across trials. A visual evaluation of the data as
 presented in Figure \ref{fig:iozoneplot} shows that we cannot make an accurate
 judgement of whether we are seeing a new wokload purely based on the performance
 counter data. From this graph, we observe that the workload manifests as a
-change in the graph.  Additionally, this graph gives some insights into how the
-operating system uses the hypervisor. We observe a high level of entropy at boot
-and shortly after the shell is displayed to the user. Runs of the filesystem
+change in the graph; after the workload starts, more unique counter values are
+observed.  Additionally, this graph gives some insights into how the operating
+system uses the hypervisor. We observe a high level of entropy at boot and
+shortly after the shell is displayed to the user. Runs of the filesystem
 benchmark increase the number of unique counters observed, but successive runs
 do not show an increase by a lesser delta. From this, we can conclude that while
 the performance counters are a valuable metric, they cannot stand alone in
@@ -359,11 +360,28 @@ out by exit reason and observe how the number of unique exit reasons grow over
 time. This script used a bucket size of 1000 (refer to
 Figure~\ref{fig:iozoneplot} for more information on bucket size).
 
-Some interesting trends arise in the data. The two systems have a different
-distribution of total exit reasons, with Windows having more EPT\_MISCONFIG and
-PENDING\_INTERRUPT exits than Linux. Both boot sequences have high levels of
-IO\_INSTRUCTION exits compared other reasons. There are also some differences in
-how the exits occur over time.
+This is a black-box style approach because the hypervisor is not aware of what
+is running above it in the stack. From the area in code where the performance
+counter data gets collected, it is not possible to be entirely sure what
+code caused the exit to occur or what operating system is being run. However, by
+analyzing trends in the counter data that is collected, we can make an educated
+guess as to which operating system is being run. This is because Windows and
+Linux use the hypervisor in different ways over time.
+
+The two systems have a different distribution of total exit reasons, with
+Windows having more EPT\_MISCONFIG and PENDING\_INTERRUPT exits than Linux. Both
+boot sequences have high levels of IO\_INSTRUCTION exits compared other reasons.
+There are also some differences in how the exits occur over time. It is
+difficult to come to any specific conclusion from this exit reason distirbution,
+but it may be helpful in aiding future tools to detect which system is being
+run.
+
+Ultimately, the data presented in this section is useful because it provides
+insights into how these two operating systems leverage the hypervisor. Looking
+at the data without exit reasons, it's clear that the trends are different.
+However, it is even more powerful to look at the data based on each exit reason.
+In this manner, this data can expose how different subsystems of the operating
+system leverage the underlying hardware.
 
 \begin{figure}[htpb!]
     \centering
@@ -391,9 +409,16 @@ The next area of interest is lookng at how both the KVM and QEMU measurements
 portray the same workload. In Figure~\ref{fig:qemukvm}, a boot sequence of the
 CentOS VM has been graphed using both subsystems' counters. This graph shows us
 that KVM generates a significant amount of data compared to QEMU, but also that
-growth of KVM counters is more granular.
-
-%TODO: more about QEMU vs KVM
+growth of KVM counters is more granular. In order to better understand the
+repetitive nature of these datasets, I hashed each row of data to check what
+percentage of the data was actually unique. The results were surprising: only
+2.1\% of the QEMU signaures were unique compared to 30.74\% of the KVM
+signatures. Therefore, even though KVM sees many more exits than QEMU does, the
+performance counter signature (the values combined with the label) measured
+across the exit is more likely to have been seen before. This suggests that
+there is more entropy in the QEMU subsystem.\footnote{The data was collected with
+    interrupts pinned to a different CPU and the QEMU process also pinned to a
+CPU.}
 
 \begin{figure}[htpb!]
 \centering
