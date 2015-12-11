@@ -395,13 +395,14 @@ system leverage the underlying hardware.
         \includegraphics[width=1\textwidth]{hlt_linux.pdf}
         Linux
     \end{minipage}
-    \caption{Distribution of HLT (halt) exits for Windows and Linux virtual machine
-    boots. Observe that the number of HLT exits quickly climbs and stabilizes for
-    Linux, but does so much later in the Windows process. It is difficult to explain
-    this discrepancy, but it does give some insight that we can use the counter
-    instrumentation tools to observe differences in how these two operating systems
-    use the hypervisor when running in a virtual machine.}
-    \label{fig:winlinhlt}
+    \caption{Distribution of HLT (halt) exits for Windows and Linux virtual
+        machine boots. Observe that the number of HLT exits quickly climbs and
+        stabilizes for Linux, but does so much later in the Windows process. It
+        is difficult to explain this discrepancy, but it does give some insight
+        that we can use the counter instrumentation tools to observe differences
+        in how these two operating systems use the hypervisor when running in a
+        virtual machine. \textbf{Note:} these two graphs have different axis.
+    That is because they represent different workloads.} \label{fig:winlinhlt}
 \end{figure}
 
 \subsection{KVM and QEMU}
@@ -417,8 +418,17 @@ signatures. Therefore, even though KVM sees many more exits than QEMU does, the
 performance counter signature (the values combined with the label) measured
 across the exit is more likely to have been seen before. This suggests that
 there is more entropy in the QEMU subsystem.\footnote{The data was collected with
-    interrupts pinned to a different CPU and the QEMU process also pinned to a
-CPU.}
+    interrupts pinned to CPU 0 and the QEMU process pinned to CPU 1.}
+
+\subsection{Feasability of Whitelist Construction}
+Because the number of unique counters never truly reaches saturation, it is
+unfortunately not possible to rely solely on hardware performance counters to
+determine whether a unique (or safe) workload is being run. It may, however, be
+possible to combine data from other areas of the stack with these HPCs to build
+a new counter value. One possible solution is to look at the basic blocks of
+instruction and attempt to infer unique workloads from the control flow of the
+machine.\footnote{This approach was
+originally outlined in the hShield paper earlier in the year.}
 
 \begin{figure}[htpb!]
 \centering
@@ -444,17 +454,26 @@ envision many interesting tools stemming from this. One example is a quick tool
 to capture the current hypervisor state and graph the next 30 seconds of data to
 see if there are any interesting phenomena occurring.
 
+The other potential application is to continue working with this data in order
+to build a new type of counter (as outlined in the previous section). Further
+research is required to understand and determine what other sources of data
+would be good candidates for building such a counter.
+
+Additionally, the Air Force Research Laboratory has expressed interest in this
+work and may decide to use it in other projects.
+
 \subsection{Open Questions}
 The primary open question is: how can we leverage this existing performance
-counter infrastructure and data to create security tools? This is largely the
-focus of the hshield % TODO: REF HSHIELD %
-paper, which aims to build a new counter containing multiple input sources of
-data (such as information about the basic blocks being executed, performance
-counter data, and more). From there, a hardware unit can be built to
-continuously monitor integrity. Since the overhead of the performance counters
-is relatively minimal (due to native support in the CPU), this could be a viable
-application of this work.
+counter infrastructure and data to create security tools? . From there, a
+hardware unit can be built to continuously monitor integrity. Since the overhead
+of the performance counters is relatively minimal (due to native support in the
+CPU), this could be a viable application of this work.
 
+Since this is a black box approach, another question is what more we can learn
+about the operating system (and other potential workloads running within it)
+from this data alone. I have shown that it is not possible to uniquely isolate a
+workload, but some other insights about the characteristics of any general
+computation being done using the hypervisor could be drawn from the data.
 
 \section{Conclusion}
 \label{sec:conclusion}
