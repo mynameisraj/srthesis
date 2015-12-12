@@ -35,7 +35,7 @@
 as part of CS499 (senior thesis) from January 2015 through December 2015.
 
 The paper is structured as follows. A brief discussion of related performance
-counters work is provided in Section~\ref{sec:related}. An overview of the
+counter work is provided in Section~\ref{sec:related}. An overview of the
 userspace data and QEMU is presented in Section~\ref{sec:qemu}. In
 Section~\ref{sec:kvm}, the development of the kernel module and interaction with
 KVM is explained. Section~\ref{sec:data} contains an overview of the data
@@ -50,40 +50,38 @@ plan for the work was developed and several core components were engineered.
 This includes the user space counter collection tool and the kernel space tool.
 
 The second semester of this work was mostly focused around understanding whether
-performance counters can be a useful invariant on their own, or whether other
+performance counters can be an invariant on their own, or whether other
 components would need to be used in order to detect execution irregularities.
 This involved collecting data on multiple Linux machines and VMs, creating tools
 to analyze the data, and graphing the data to understand its usefulness.
-Additionally, most of this semester was spent brainstorming potential
+Additionally, this semester was spent brainstorming potential
 applications of the performance counter work and deciding which scenarios this
 work could be useful in.
 
 \subsection{Background}
-This thesis was grown out of previous semsters I had spent working with the
+This thesis was grown out of previous semesters I had spent working with the
 DEPEND research group. Specifically, in this work,  I sought to answer the
-following question:
-\textit{by constructing fingerprints
-    from execution signatures (using performance counters) of a hypervisor
-    (e.g., qemu-kvm) at different points in time, is it possible to detect
-    compromised hypervisor execution by comparing those signatures to known good ones?} This
-    is a form of \textit{dynamic analysis} because the detection is done at
-    performed by running the hypervisor and not through a tool that analyzes a
-    binary beforehand.
+following question: \textit{is it possible to detect compromised hypervisor
+    execution by using hardware performance counter data alone?} This is a form
+    of \textit{dynamic analysis} because the detection is done at performed by
+    running the hypervisor and not through a tool that analyzes a binary
+    beforehand.
 
 \subsection{Hardware Performance Counters}
 Hardware performance counters (herein referred to as HPCs) allow for the
 collection of various low-level information about a processor's current state.
 The counters can provide valuable performance insights. Unfortunately, the first
-machine I attempted to use did not support HPCs, and it is not enabled by
+machine I attempted to use did not support HPCs, and HPCs are not enabled by
 default on most machines.  However, after switching to another machine, I was
 able to enable the counters and begin collecting data.
 
 The counters available vary from machine to machine. The important counters are
 total retired instructions, conditional branch instructions, branch
 instructions, store instructions, and load instructions.  There are multiple
-ways to access the counter values. In user space, I used a library called
-PAPI\cite{papi}, and in kernel space, I made use of the built-in performance
-counter API in Linux.
+ways to access the counter values. In user space, I developed a module which
+uses an API called PAPI\cite{papi}, and in kernel space, I made use of the
+built-in performance counter API in Linux to create a device driver to gather
+HPC data.
 
 \subsection{Motivation}
 To understand the motivation behind this project, it is important to have a good
@@ -146,8 +144,8 @@ sampling rate of 5 seconds, the overhead introduced by NumChecker was
 situation was less than 10\%\cite{arehardware}.
 
 \subsection{Counter Accuracy and Nondeterminism}
-Using HPCs as an invariant has proved a controversial topic, as they appear to
-be nondeterministic. This is because there are many events happening on the
+Using HPCs as an invariant are a controversial topic, as they appear to be
+nondeterministic. This is because there are many events happening on the
 processor, which cause small fluctuations in the counter values. These include
 interrupts and other processes running on the system.
 
@@ -162,21 +160,25 @@ chip. The paper ``Non-determinism and overcount on modern hardware performance
 counter implementations'' explores these sources and attempts to make sense of
 which counters are best. It comes to the conclusion that total instructions
 retired is one of the most consistent counters\cite{overcount}. This paper also
-discusses the issue of overcount, which occurs in virtually every counter.
+discusses the issue of overcount, which occurs in virtually every
+counter.\footnote{Overcount refers to the value of the counter being higher than
+what the metric it track is actually at.}
 
 \subsection{Detection Accuracy from Using HPCs}
 HPCs only provide the data. From this data, is important to conduct proper
 statistical analysis to achieve meaningful results. Specifically, in integrity
-checking, the most important metric is a low false positive rate.
+checking, the most important metrics are a low false positive rate and a low
+false negative rate.
 
-The HPC data is best interpreted as a matrix of feature vectors.  From this, a
+The HPC data can be represented as a matrix of feature vectors.  From this, a
 number of very interesting analytical techniques arise, including (but not
 limited to): linear regression, support vector machines, random forests, nearest
 neighbors, and clustering. Principally, nearest neighbors is the most popular of
 these choices, but each approach has different advantages\cite{forsyth}. It is
 also possible to build simple classification simply by looking within a
 threshold of all known values\cite{numchecker}. In one paper, artificial neural
-networks were used\cite{feasibility}.
+networks were used\cite{feasibility}. These methods are good candidates for
+future investigation.
 % zak comment - "do we do this?"
 % raj - maybe a misunderstanding, this is still literature review
 
@@ -233,10 +235,10 @@ observe the QEMU data for this period.
 The KVM kernel module was modified for use in this project. This section aims to
 explain the changes that were made and elaborate on the design of the additional
 data collection module that was developed.\footnote{A full list of modifications
-to the module is available in the README of the project.}
+to the module is available in the README of the kprof project.}
 
 \subsection{KVM Exits}
-When execution is transferred to KVM, the hypervisor will return what is known
+When execution transfers back to KVM, the hypervisor will return what is known
 as an \textit{exit reason} when execution transfers back. If the exit was
 generated by VT-x (a privileged instruction was executed and the VM is using
 hardware-assisted virtualization, KVM will label the exit appropriately
@@ -251,7 +253,7 @@ In order to be able to collect the data from user space, I developed a device
 driver. This allows the usage of the \texttt{ioctl} function from the user space
 program (useragent) and for data to be transferred out of the kernel.
 
-In the device driver, called \texttt{kprof}, a set of internal buffers in
+In the device driver, called \texttt{kprof}, a set of internal buffers is
 constructed so that the vectors of performance counter data may be continuously
 populated in memory and then flushed to disk at an interval (this is the same
 technique used in the hprobe kernel module).  This helps keep the performance
@@ -273,13 +275,13 @@ code path. When an exit returns, the counters are started until the next exit
 comes in.
 
 As discussed above, the counters are placed into a series of buffers. Finally,
-the useragent program is run in user space to flush these buffers and reset the
-internal state of the \texttt{kprof} module. Because a single run of the VM may
-result in the collection of millions of entries (resulting in some buffers being
-overwritten), the useragent program is run simultaneously while the VM is
-running. One major benefit of this multi-part solution is that the module does
-not need to be re-installed for additional runs. An API for resetting the
-internal state of the module is exposed via the \texttt{ioctl} interface.
+the useragent program is run to flush these buffers and reset the internal state
+of the \texttt{kprof} module. Because a single run of the VM may result in the
+collection of millions of entries (resulting in some buffers being overwritten),
+the useragent program is run simultaneously while the VM is running. One major
+benefit of this multi-part solution is that the module does not need to be
+re-installed for additional runs. An API for resetting the internal state of the
+module is exposed via the \texttt{ioctl} interface.
 
 
 \section{Data Collection}
@@ -305,7 +307,6 @@ the exit reason, which is followed by the performance counter values.}
 \label{sec:analysis}
 
 \subsection{iozone and Workload Distribution}
-% TODO
 \begin{figure}[htp]
     \centering
     \includegraphics[width=4.5in]{iozone_plot.pdf}
@@ -324,21 +325,21 @@ time for a workload consisting of machine boot followed by several runs of the
 iozone benchmark. Multiple data collection trials and analysis showed that the
 counter data is consistent across trials. A visual evaluation of the data as
 presented in Figure \ref{fig:iozoneplot} shows that we cannot make an accurate
-judgement of whether we are seeing a new wokload purely based on the performance
-counter data. From this graph, we observe that the workload manifests as a
-change in the graph; after the workload starts, more unique counter values are
-observed.  Additionally, this graph gives some insights into how the operating
-system uses the hypervisor. We observe a high level of entropy at boot and
-shortly after the shell is displayed to the user. Runs of the filesystem
-benchmark increase the number of unique counters observed, but successive runs
-do not show an increase by a lesser delta. From this, we can conclude that while
-the performance counters are a valuable metric, they cannot stand alone in
-detecting certain executions.
+judgement of whether we are seeing a new workload purely based on the
+performance counter data. From this graph, we observe that the workload
+manifests as a change in the graph; after the workload starts, more unique
+counter values are observed.  Additionally, this graph gives some insights into
+how the operating system uses the hypervisor. We observe a high level of entropy
+(a large number of unique counter values) at boot and shortly after the shell is
+displayed to the user. Runs of the filesystem benchmark increase the number of
+unique counters observed, but successive runs do not show an increase by a
+lesser delta. From this, we can conclude that while the performance counters are
+a valuable metric, they cannot stand alone in detecting certain executions.
 
 This is just one view of the data. Another is to separate the graphs by observed
 exit reason. This allows us to interpret the specific nature of the workload.
 For the iozone dataset, if we separate the data according to exit reason, there
-are many \texttt{HALT} exit reasons occuring during the iozone runs (this exit
+are many \texttt{HLT} exit reasons occurring during the iozone runs (this exit
 reason indicates that the CPU has been paused until the next interrupt occurs).
 However, these are sparse during the boot of the operating system. In this case,
 the halt instructions might be a sign that there is an IO-heavy operation
@@ -360,28 +361,46 @@ out by exit reason and observe how the number of unique exit reasons grow over
 time. This script used a bucket size of 1000 (refer to
 Figure~\ref{fig:iozoneplot} for more information on bucket size).
 
-This is a black-box style approach because the hypervisor is not aware of what
-is running above it in the stack. From the area in code where the performance
-counter data gets collected, it is not possible to be entirely sure what
-code caused the exit to occur or what operating system is being run. However, by
-analyzing trends in the counter data that is collected, we can make an educated
-guess as to which operating system is being run. This is because Windows and
-Linux use the hypervisor in different ways over time.
+This is a black-box style approach because we do not inform the hypervisor of
+what is running above it in the stack. From the area in code where the
+performance counter data gets collected, it is not possible to be entirely sure
+what code caused the exit to occur or what operating system is being run.
+However, by analyzing trends in the counter data that is collected, we can make
+an educated guess as to which operating system is being run. This is because
+Windows and Linux use the hypervisor in different ways over time.
 
-The two systems have a different distribution of total exit reasons, with
-Windows having more EPT\_MISCONFIG and PENDING\_INTERRUPT exits than Linux. Both
-boot sequences have high levels of IO\_INSTRUCTION exits compared other reasons.
-There are also some differences in how the exits occur over time. It is
-difficult to come to any specific conclusion from this exit reason distirbution,
-but it may be helpful in aiding future tools to detect which system is being
-run.
+\begin{figure}[htpb!]
+    \centering
+    \begin{minipage}{.5\textwidth}
+        \centering
+        \includegraphics[width=1\textwidth]{dist_windows.png}
+        Windows
+    \end{minipage}%
+    \begin{minipage}{0.5\textwidth}
+        \centering
+        \includegraphics[width=1\textwidth]{dist_linux.png}
+        Linux
+    \end{minipage}
+    \caption{Distribution of exits by exit reason for Windows and Linux virtual
+        machine boots. This represents the same workload shown in
+    \ref{fig:winlinhlt}.}
+    \label{fig:barplots}
+\end{figure}
+
+As shown in Figure~\ref{fig:barplots}, the two systems have a different
+distribution of total exit reasons, with Windows having more EPT\_MISCONFIG and
+PENDING\_INTERRUPT exits than Linux. Both boot sequences have high levels of
+IO\_INSTRUCTION exits compared other reasons.  There are also some differences
+in how the exits occur over time. It is difficult to come to any specific
+conclusion from this exit reason distirbution, but it may be helpful in aiding
+future tools to detect which system is being run.
 
 Ultimately, the data presented in this section is useful because it provides
-insights into how these two operating systems leverage the hypervisor. Looking
+insights into how these two operating systems use the hypervisor. Looking
 at the data without exit reasons, it's clear that the trends are different.
 However, it is even more powerful to look at the data based on each exit reason.
 In this manner, this data can expose how different subsystems of the operating
-system leverage the underlying hardware.
+system use the underlying hardware.
 
 \begin{figure}[htpb!]
     \centering
@@ -406,29 +425,29 @@ system leverage the underlying hardware.
 \end{figure}
 
 \subsection{KVM and QEMU}
-The next area of interest is lookng at how both the KVM and QEMU measurements
+The next area of interest is looking at how both the KVM and QEMU measurements
 portray the same workload. In Figure~\ref{fig:qemukvm}, a boot sequence of the
-CentOS VM has been graphed using both subsystems' counters. This graph shows us
-that KVM generates a significant amount of data compared to QEMU, but also that
-growth of KVM counters is more granular. In order to better understand the
-repetitive nature of these datasets, I hashed each row of data to check what
-percentage of the data was actually unique. The results were surprising: only
-2.1\% of the QEMU signaures were unique compared to 30.74\% of the KVM
-signatures. Therefore, even though KVM sees many more exits than QEMU does, the
-performance counter signature (the values combined with the label) measured
-across the exit is more likely to have been seen before. This suggests that
-there is more entropy in the QEMU subsystem.\footnote{The data was collected with
-    interrupts pinned to CPU 0 and the QEMU process pinned to CPU 1.}
+CentOS VM has been graphed using both kprof and the modified QEMU's counters.
+This graph shows us that KVM generates a significant amount of data compared to
+QEMU, but also that growth of KVM counters is more granular. In order to better
+understand the repetitive nature of these datasets, I hashed each row of data to
+check what percentage of the data was actually unique. The results were
+surprising: only 2.1\% of the QEMU signatures were unique compared to 30.74\% of
+the KVM signatures. Therefore, even though KVM sees many more exits than QEMU
+does, the performance counter signature (the values combined with the label)
+measured across the exit is more likely to have been seen before. This suggests
+that there is more entropy in the QEMU subsystem.\footnote{The data was
+collected with interrupts pinned to CPU 0 and the QEMU process pinned to CPU 1.}
 
-\subsection{Feasability of Whitelist Construction}
-Because the number of unique counters never truly reaches saturation, it is
-unfortunately not possible to rely solely on hardware performance counters to
-determine whether a unique (or safe) workload is being run. It may, however, be
-possible to combine data from other areas of the stack with these HPCs to build
-a new counter value. One possible solution is to look at the basic blocks of
-instruction and attempt to infer unique workloads from the control flow of the
-machine.\footnote{This approach was
-originally outlined in the hShield paper earlier in the year.}
+\subsection{Feasability of Whitelist Construction} Because the number of unique
+counters never truly reaches saturation, it is not possible to rely solely on
+hardware performance counters to determine whether a unique (or safe) workload
+is being run. It may, however, be possible to combine data from other areas of
+the stack (e.g. basic blocks, network traffic, and interrupts) with these HPCs
+to build a new counter value. One possible solution is to look at the basic
+blocks of the compiled software and attempt to infer unique workloads from the
+control flow of the machine.\footnote{This approach was originally outlined in
+the hShield paper earlier in the year.}
 
 \begin{figure}[htpb!]
 \centering
@@ -451,8 +470,10 @@ Future work will involve building tools around the workload analysis component
 of this work. Since the API is already there, this is not too difficult to do
 for other developers. They can easily grab the counter data and manipulate it. I
 envision many interesting tools stemming from this. One example is a quick tool
-to capture the current hypervisor state and graph the next 30 seconds of data to
-see if there are any interesting phenomena occurring.
+to capture the most recent 30 seconds (or other appropriate timeframe) of HPC
+data to see if there are any interesting phenomena occurring (perhaps some
+automated classifications could be made based on the number of exits, frequency
+of certain exits, or even the values of the counters).
 
 The other potential application is to continue working with this data in order
 to build a new type of counter (as outlined in the previous section). Further
@@ -473,12 +494,14 @@ Since this is a black box approach, another question is what more we can learn
 about the operating system (and other potential workloads running within it)
 from this data alone. I have shown that it is not possible to uniquely isolate a
 workload, but some other insights about the characteristics of any general
-computation being done using the hypervisor could be drawn from the data.
+computation being done using the hypervisor could be drawn from the data. It is
+also feasible to distinguish whether the hypervisor is running Linux or Windows
+from the HPC data.
 
 \section{Conclusion}
 \label{sec:conclusion}
 This work has shown that hardware performance counters can provide valuable
-infomration about how the hypervisor is used. It has also shown that HPCs alone
+information about how the hypervisor is used. It has also shown that HPCs alone
 cannot be used as an invariant for dynamic security analysis, and it has helped
 motivate the future direction of the hshield work.
 
@@ -488,7 +511,7 @@ efficiently capture and extract performance counter data. My hope is that this
 module is further developed into a powerful suite of analysis tools that any
 program can quickly invoke.
 
-Personally, I have learned many interesting facts about how virutal machines
+Personally, I have learned many interesting facts about how virtual machines
 operate and how other subsystems of Linux work. Specifically, I've learned the
 effects of interrupts on program execution, how to use performance counters to
 instrument execution, and how to develop an efficient device driver.
