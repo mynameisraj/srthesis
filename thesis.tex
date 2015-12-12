@@ -71,9 +71,9 @@ following question: \textit{is it possible to detect compromised hypervisor
 Hardware performance counters (herein referred to as HPCs) allow for the
 collection of various low-level information about a processor's current state.
 The counters can provide valuable performance insights. Unfortunately, the first
-machine I attempted to use did not support HPCs, and HPCs are not enabled by
-default on most machines.  However, after switching to another machine, I was
-able to enable the counters and begin collecting data.
+machine I attempted to use (with a Sandy Bridge processor) did not support HPCs,
+and HPCs are not enabled by default on most machines.  However, after switching
+to another machine, I was able to enable the counters and begin collecting data.
 
 The counters available vary from machine to machine. The important counters are
 total retired instructions, conditional branch instructions, branch
@@ -220,14 +220,17 @@ instrumentation purposes.
 
 The modifications were fairly simple: using the PAPI performance counter
 library, I was able to output HPC measurements across a known path of execution.
-The path of execution chosen measures the lifespan of an exit in QEMU. That is,
-the counter is started when the exit comes back to QEMU and ended when the next
-exit leaves.
+The path of execution chosen measures the lifespan of a VM exit handler in QEMU.
+The counter is started when QEMU is invoked (e.g., by KVM) to handle a VM exit,
+and when QEMU finishes its handling routine (e.g., to return to KVM), the
+counter is stopped.
 
-Furthermore, with the KVM hypercall extension, I was able to make markings in
-the data collection from within the guest VM. With this toolset, it became
-trivial to mark the beginning and ending of a program in the guest VM and
-observe the QEMU data for this period.
+In order to communicate from within a VM to the data collection tool running
+within the hypervisor, I leveraged the hypercall interface. With this custom KVM
+hypercall extension, I was able to make markings in the data collection from
+within the guest VM. With this toolset, it became trivial to mark the beginning
+and ending of a program in the guest VM and observe the QEMU data for this
+period.
 
 
 \section{KVM and \texttt{kprof}}
@@ -329,12 +332,13 @@ judgement of whether we are seeing a new workload purely based on the
 performance counter data. From this graph, we observe that the workload
 manifests as a change in the graph; after the workload starts, more unique
 counter values are observed.  Additionally, this graph gives some insights into
-how the operating system uses the hypervisor. We observe a high level of entropy
-(a large number of unique counter values) at boot and shortly after the shell is
-displayed to the user. Runs of the filesystem benchmark increase the number of
-unique counters observed, but successive runs do not show an increase by a
-lesser delta. From this, we can conclude that while the performance counters are
-a valuable metric, they cannot stand alone in detecting certain executions.
+how the guest operating system uses the hypervisor. We observe a high level of
+entropy (a large number of unique counter values) at boot and shortly after the
+shell is displayed to the user. Runs of the filesystem benchmark increase the
+number of unique counters observed, but successive runs do not show an increase
+by a lesser delta. From this, we can conclude that while the performance
+counters are a valuable metric, they cannot stand alone in detecting certain
+executions.
 
 This is just one view of the data. Another is to separate the graphs by observed
 exit reason. This allows us to interpret the specific nature of the workload.
